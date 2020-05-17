@@ -7,6 +7,7 @@ import platform
 amountOfLinks = len(sys.argv)-1
 urlCounter = 0
 imageCounter = 0
+skippedCounter = 0
 urlList = []
 missingFiles = []
 userAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36"
@@ -115,11 +116,13 @@ def makeConformUrl(aList):
 
 def downloader(myUrl, myImageName, myPatreonAuthor, postFolderName): #recursively tries to download the images - in the case of the site not accepting anymore requests
     global imageCounter
+    global skippedCounter
     try:
         r = requests.get(myUrl, headers = {'User-Agent': userAgent}, timeout=(30,30), stream=True)
         if r.status_code == 200:
             #If we were passed a valid folder name, use it to make a folder for the post
             if (postFolderName != False):
+                # If the folder does not already exist, make it!
                 if not os.path.isdir("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +""+ postFolderName+ ""+ dirSep +""):
                     os.mkdir("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +""+ postFolderName+ ""+ dirSep +"")
                 # If the file doesn't already exist, download it!
@@ -127,8 +130,10 @@ def downloader(myUrl, myImageName, myPatreonAuthor, postFolderName): #recursivel
                     with open("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +""+ postFolderName+ ""+ dirSep +"" + myImageName, 'wb') as f:
                         for chunk in r:
                             f.write(chunk)
+                    imageCounter += 1
                 else:
                     print(">Skipped, already exists!")
+                    skippedCounter += 1
             #IF we were passed 'FALSE' instead of a folder name, do not create a folder, but simply save in Author page
             else:
                 # If the file doesn't already exist, download it!
@@ -136,9 +141,10 @@ def downloader(myUrl, myImageName, myPatreonAuthor, postFolderName): #recursivel
                     with open("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +"" + myImageName, 'wb') as f:
                         for chunk in r:
                             f.write(chunk)
+                    imageCounter += 1
                 else:
                     print(">Skipped, already exists!")
-            imageCounter += 1
+                    skippedCounter += 1
         else:
             # If we get a bad response, let the user know what it was
             print(">Skipped ["+myUrl+"]:\n>"+"(Error: Bad Response- " + str(r.status_code) + ")")
@@ -310,10 +316,11 @@ def downloadImages(url, urlCounter, useFolders):
         downloader(urlI, imageName, patreonAuthor, postFolderName)
 
     #Just a finishing message.
-    if imageCounter == 0:
-        print("No files downloaded. Maybe there are no files or you messed up the order of the arguments: python " + sys.argv[0] + " [start page] [last page] urls")
+    if (imageCounter == 0) and (skippedCounter == 0):
+        print("No files downloaded, and no existing files skipped. Maybe there are no files or you messed up the order of the arguments: python " + sys.argv[0] + " [start page] [last page] urls")
     else:
-        print("\nSuccessfully downloaded " + str(imageCounter) + " Images/Files!\n")
+        print("\nSkipped " + str(imageCounter) + " existing Images/Files!\n")
+        print("Successfully downloaded " + str(imageCounter) + " Images/Files!\n")
         print("============" + str(urlCounter) + "/" + str(amountOfLinks) + "===============\n")
 
     f = open("SkippedLinks.txt", "w+")
