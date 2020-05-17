@@ -116,25 +116,35 @@ def makeConformUrl(aList):
 def downloader(myUrl, myImageName, myPatreonAuthor, postFolderName): #recursively tries to download the images - in the case of the site not accepting anymore requests
     global imageCounter
     try:
-        r = requests.get(myUrl, headers = {'User-Agent': userAgent}, timeout=(3,6), stream=True)
+        r = requests.get(myUrl, headers = {'User-Agent': userAgent}, timeout=(30,30), stream=True)
         if r.status_code == 200:
             #If we were passed a valid folder name, use it to make a folder for the post
             if (postFolderName != False):
                 if not os.path.isdir("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +""+ postFolderName+ ""+ dirSep +""):
                     os.mkdir("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +""+ postFolderName+ ""+ dirSep +"")
-                with open("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +""+ postFolderName+ ""+ dirSep +"" + myImageName, 'wb') as f:
-                    for chunk in r:
-                        f.write(chunk)
+                # If the file doesn't already exist, download it!
+                if not os.path.isfile("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +""+ postFolderName+ ""+ dirSep +"" + myImageName):
+                    with open("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +""+ postFolderName+ ""+ dirSep +"" + myImageName, 'wb') as f:
+                        for chunk in r:
+                            f.write(chunk)
+                else:
+                    print(">Skipped, already exists!")
             #IF we were passed 'FALSE' instead of a folder name, do not create a folder, but simply save in Author page
             else:
-                with open("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +"" + myImageName, 'wb') as f:
-                    for chunk in r:
-                        f.write(chunk)
+                # If the file doesn't already exist, download it!
+                if not os.path.isfile("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +"" + myImageName):
+                    with open("."+ dirSep +"Images"+ dirSep +"" + myPatreonAuthor + ""+ dirSep +"" + myImageName, 'wb') as f:
+                        for chunk in r:
+                            f.write(chunk)
+                else:
+                    print(">Skipped, already exists!")
             imageCounter += 1
         else:
-            print(">Skipped (Bad Response: " + str(r.status_code) + "): " + myUrl)
-    except:
-        print(">Skipped (Other Error): " + myUrl)
+            # If we get a bad response, let the user know what it was
+            print(">Skipped ["+myUrl+"]:\n>"+"(Error: Bad Response- " + str(r.status_code) + ")")
+    except Exception as errorCode:
+        #If we failed out of the download entirely, show the user the exception code
+        print(">Skipped ["+myUrl+"]:\n>"+"(Error: " + str(errorCode) + ")")
         missingFiles.append(myUrl)
         return
 
@@ -262,7 +272,7 @@ def downloadImages(url, urlCounter, useFolders):
         allSoup = bs(potOfAllSoup, "html.parser")
         for h in range(0, len(linkList)-1):
             # Grab the post number (this is yiff.party's numbering, not patreon's)
-            # May fail if the URL is not a media URL, in that case use the current loop number- this URL will likely get skipped
+            # May fail if the URL is not a media URL, in that case use the current loop number- this URL won't be downloaded anyway
             try:
                 postNumber = {str(h):str(linkList[h].split("/")[5])}
             except:
