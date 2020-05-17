@@ -319,8 +319,8 @@ def downloadImages(url, urlCounter, useFolders):
     if (imageCounter == 0) and (skippedCounter == 0):
         print("No files downloaded, and no existing files skipped. Maybe there are no files or you messed up the order of the arguments: python " + sys.argv[0] + " [start page] [last page] urls")
     else:
-        print("\nSkipped " + str(imageCounter) + " existing Images/Files!\n")
-        print("Successfully downloaded " + str(imageCounter) + " Images/Files!\n")
+        print("\nSuccessfully skipped " + str(skippedCounter) + " existing Images/Files!\n")
+        print("Successfully downloaded " + str(imageCounter) + " new Images/Files!\n")
         print("============" + str(urlCounter) + "/" + str(amountOfLinks) + "===============\n")
 
     f = open("SkippedLinks.txt", "w+")
